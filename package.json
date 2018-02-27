@@ -1,0 +1,41 @@
+{
+  "name": "clustd",
+  "version": "0.0.1",
+  "description": "Cluster daemon and control service",
+  "repository": "https://github.com/steemdunk/clustd",
+  "main": "out/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Samuel Grenier",
+  "license": "MIT",
+  "dependencies": {
+    "debug": "^3.1.0",
+    "http-status": "^1.0.1",
+    "js-yaml": "^3.10.0",
+    "koa": "^2.4.1",
+    "koa-bodyparser": "^4.2.0",
+    "koa-route": "^3.2.0",
+    "request": "^2.83.0",
+    "ws": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/debug": "0.0.30",
+    "@types/http-status": "^0.2.30",
+    "@types/koa": "^2.0.44",
+    "@types/koa-bodyparser": "^4.2.0",
+    "@types/koa-route": "^3.2.3",
+    "@types/node": "^9.4.6",
+    "@types/request": "^2.47.0",
+    "@types/ws": "^4.0.1",
+    "del": "^3.0.0",
+    "gulp": "^3.9.1",
+    "gulp-sourcemaps": "^2.6.4",
+    "gulp-typescript": "^4.0.1",
+    "typescript": "^2.7.2"
+  },
+  "optionalDependencies": {
+    "bufferutil": "^3.0.3",
+    "utf-8-validate": "^4.0.0"
+  }
+}
