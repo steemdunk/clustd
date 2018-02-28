@@ -5,22 +5,20 @@
   "repository": "https://github.com/steemdunk/clustd",
   "main": "out/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node out/index.js",
+    "build": "gulp build"
   },
   "author": "Samuel Grenier",
   "license": "MIT",
   "dependencies": {
+    "clustd-lib": "git+https://github.com/steemdunk/clustd-lib.git#0b58b91",
     "debug": "^3.1.0",
-    "http-status": "^1.0.1",
     "js-yaml": "^3.10.0",
-    "request": "^2.83.0",
-    "ws": "^4.0.0"
+    "ws": "^4.1.0"
   },
   "devDependencies": {
     "@types/debug": "0.0.30",
-    "@types/http-status": "^0.2.30",
     "@types/node": "^9.4.6",
-    "@types/request": "^2.47.0",
     "@types/ws": "^4.0.1",
     "del": "^3.0.0",
     "gulp": "^3.9.1",

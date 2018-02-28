@@ -1,7 +1,9 @@
-import { ClusterMachine } from '../machine';
-import { EventEmitter } from 'events';
-import { Logger } from '../logger';
-import { Config } from '../config';
+import {
+  ClusterMachine,
+  LocalClient,
+  Logger
+} from 'clustd-lib';
+import { Config } from './config';
 import * as assert from 'assert';
 
 export class Cluster {
@@ -11,8 +13,8 @@ export class Cluster {
   readonly local: ClusterMachine;
   master?: ClusterMachine;
 
-  constructor(localHost: string) {
-    this.local = new ClusterMachine(localHost);
+  constructor(localClient: LocalClient) {
+    this.local = new ClusterMachine(localClient, localClient.remoteAddress);
     assert(this.local.local, 'local machine not considered local');
   }
 
@@ -47,7 +49,8 @@ export class Cluster {
 
   async joinAll() {
     for (const host of Config.cluster.machines) {
-      const machine = new ClusterMachine(host);
+      const machine = new ClusterMachine(this.local.localClient, host);
+      assert(this.local.host !== host, 'remote machine must not be local');
       this.setupMachineListeners(machine);
       machine.start();
       try {

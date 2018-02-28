@@ -1,14 +1,23 @@
-import { GenericMachine, ClusterMachine } from './machine';
+import {
+  GenericMachine,
+  ClusterMachine,
+  LocalClient,
+  Client,
+  Logger
+} from 'clustd-lib';
 import { Cluster } from './cluster';
 import { Config } from './config';
-import { Client } from './client';
-import { Logger } from './logger';
 import * as newDebug from 'debug';
 import * as WebSocket from 'ws';
 
 const debug = newDebug('clustd:main');
 const logger = new Logger('clustd');
-const cluster = new Cluster(Config.server.remote_address);
+const localClient: LocalClient = {
+  secret: Config.cluster.secret,
+  remoteAddress: Config.server.remote_address,
+  id: Config.cluster.id
+};
+const cluster = new Cluster(localClient);
 
 (async () => {
   await cluster.joinAll();
@@ -35,12 +44,12 @@ const cluster = new Cluster(Config.server.remote_address);
   ws.on('connection', async (socket, req) => {
     const addr = req.socket.remoteAddress;
     try {
-      const client = new Client(true, socket);
+      const client = new Client(localClient, true, socket);
       const header = Buffer.from(req.headers['metadata'] as string, 'base64');
       const meta = client.decryptMsg(header);
       debug('Incoming client (%s) presents metadata: %o', addr, meta);
       if (meta.type === 'cluster') {
-        const machine = new ClusterMachine();
+        const machine = new ClusterMachine(localClient);
         cluster.setupMachineListeners(machine);
         machine.start();
         await machine.initClient(client);
