@@ -3,10 +3,11 @@ import {
   LocalClient,
   Logger
 } from 'clustd-lib';
+import { EventEmitter } from 'events';
 import { Config } from './config';
 import * as assert from 'assert';
 
-export class Cluster {
+export class Cluster extends EventEmitter {
 
   private readonly logger = new Logger('cluster');
   private readonly machines: { [id: string]: ClusterMachine } = {};
@@ -14,6 +15,7 @@ export class Cluster {
   master?: ClusterMachine;
 
   constructor(localClient: LocalClient) {
+    super();
     this.local = new ClusterMachine(localClient, localClient.remoteAddress);
     assert(this.local.local, 'local machine not considered local');
   }
@@ -120,5 +122,8 @@ export class Cluster {
     this.master = newMaster;
     this.master.master = true;
     this.logger.info('Assigned cluster master:', this.master.id);
+
+    const isMaster = this.master.id === this.local.id;
+    this.emit('assign_master', this.master.id, isMaster);
   }
 }

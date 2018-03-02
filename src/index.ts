@@ -3,8 +3,10 @@ import {
   ClusterMachine,
   LocalClient,
   Client,
-  Logger
+  Logger,
 } from 'clustd-lib';
+import { RemoteDriver } from './driver';
+import { DriverManager } from './driver_manager';
 import { Cluster } from './cluster';
 import { Config } from './config';
 import * as newDebug from 'debug';
@@ -17,7 +19,10 @@ const localClient: LocalClient = {
   remoteAddress: Config.server.remote_address,
   id: Config.cluster.id
 };
+
 const cluster = new Cluster(localClient);
+const driverManager = new DriverManager();
+driverManager.init(cluster);
 
 (async () => {
   await cluster.joinAll();
@@ -56,6 +61,11 @@ const cluster = new Cluster(localClient);
         if (!cluster.register(machine)) {
           machine.stop();
         }
+      } else if (meta.type === 'driver') {
+        const machine = new RemoteDriver(localClient, addr!);
+        machine.start();
+        await machine.initClient(client, true);
+        driverManager.register(machine);
       } else {
         throw new Error('unknown type: ' + meta.type);
       }
