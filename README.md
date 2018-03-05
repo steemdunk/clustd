@@ -37,4 +37,4 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"
 
 Drivers will be managing what happens when a cluster becomes a master or a backup. For example, if a machine goes down, another machine that becomes the master can start a service and automatically update any server configuration for public consumption, minimizing downtime.
 
-**This is still a work in progress!**
+Check out the library at https://github.com/steemdunk/clustd-lib for writing your own drivers.
