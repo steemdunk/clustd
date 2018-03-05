@@ -11,7 +11,7 @@
   "author": "Samuel Grenier",
   "license": "MIT",
   "dependencies": {
-    "clustd-lib": "git+https://github.com/steemdunk/clustd-lib.git#63bd4bc",
+    "clustd-lib": "git+https://github.com/steemdunk/clustd-lib.git#10a421a",
     "debug": "^3.1.0",
     "js-yaml": "^3.10.0",
     "ws": "^4.1.0"
