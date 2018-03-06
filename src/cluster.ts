@@ -64,7 +64,7 @@ export class Cluster extends EventEmitter {
   }
 
   setupMachineListeners(machine: ClusterMachine) {
-    machine.on('open', () => {
+    machine.once('open', () => {
       if (!this.register(machine)) {
         machine.stop();
       }
