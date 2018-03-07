@@ -70,6 +70,17 @@ export class Cluster extends EventEmitter {
       }
     });
 
+    machine.on('open', async () => {
+      try {
+        const newMasterId: string = (await machine.send('get_master')).master;
+        if (newMasterId === machine.id) {
+          this.assignMaster(newMasterId);
+        }
+      } catch (e) {
+        this.logger.error('Failed to check if machine is master:', machine.id, e);
+      }
+    });
+
     machine.on('close', () => {
       if (this.master!.id === machine.id) {
         this.assignMaster();
@@ -79,27 +90,6 @@ export class Cluster extends EventEmitter {
     machine.on('cluster_master_get', () => {
       machine.emit('cluster_master_current', this.master!.id);
     });
-  }
-
-  async getRemoteMaster(): Promise<ClusterMachine|undefined> {
-    if (!Object.keys(this.machines).length) {
-      return;
-    }
-
-    let master: ClusterMachine|undefined;
-    for (const m of Object.values(this.machines)) {
-      const newMasterId: string = (await m.send('get_master')).master;
-      const newMaster = this.machines[newMasterId];
-      if (!newMaster) {
-        this.logger.warn('Unrecognized machine id:', newMasterId);
-        continue;
-      }
-      if (!(master === undefined || newMaster.id === master.id)) {
-        throw new Error('fatal master mismatch on the network');
-      }
-      master = newMaster;
-    }
-    return master;
   }
 
   assignMaster(newMasterId?: string) {

@@ -26,12 +26,9 @@ driverManager.init(cluster);
 
 (async () => {
   await cluster.joinAll();
-  const master = await cluster.getRemoteMaster();
-  if (!master) {
+  if (!cluster.master) {
     logger.info('Starting a new cluster...');
     cluster.assignMaster();
-  } else {
-    cluster.assignMaster(master.id);
   }
 
   const ws = new WebSocket.Server({
