@@ -1,4 +1,6 @@
 import {
+  HandshakeRejected,
+  HsRejectStatus,
   GenericMachine,
   ClusterMachine,
   LocalClient,
@@ -26,9 +28,12 @@ driverManager.init(cluster);
 
 (async () => {
   await cluster.joinAll();
-  if (!cluster.master) {
+  const master = await cluster.getRemoteMaster();
+  if (!master) {
     logger.info('Starting a new cluster...');
     cluster.assignMaster();
+  } else {
+    cluster.assignMaster(master.id);
   }
 
   const ws = new WebSocket.Server({
@@ -51,18 +56,9 @@ driverManager.init(cluster);
       const meta = client.decryptMsg(header);
       debug('Incoming client (%s) presents metadata: %o', addr, meta);
       if (meta.type === 'cluster') {
-        const machine = new ClusterMachine(localClient);
-        cluster.setupMachineListeners(machine);
-        machine.start();
-        await machine.initClient(client);
-        if (!cluster.register(machine)) {
-          machine.stop();
-        }
+        await handleClusterConn(client);
       } else if (meta.type === 'driver') {
-        const machine = new RemoteDriver(localClient, addr!);
-        machine.start();
-        await machine.initClient(client, true);
-        driverManager.register(machine);
+        await handleDriverConn(client, addr!);
       } else {
         throw new Error('unknown type: ' + meta.type);
       }
@@ -72,3 +68,37 @@ driverManager.init(cluster);
     }
   });
 })();
+
+async function handleClusterConn(client: Client) {
+  const machine = new ClusterMachine(localClient);
+  cluster.setupMachineListeners(machine);
+  machine.start();
+  try {
+    await machine.initClient(client);
+    if (!cluster.register(machine)) {
+      machine.stop();
+      return;
+    }
+
+    const newMasterId: string = (await machine.send('get_master')).master;
+    if (newMasterId && newMasterId === machine.id) {
+      // when newMasterId isn't present it's a new cluster instance
+      cluster.assignMaster(newMasterId);
+    }
+  } catch (e) {
+    if (!(e instanceof HandshakeRejected
+          && e.type === HsRejectStatus.REJECTED)) {
+      throw e;
+    }
+  }
+}
+
+async function handleDriverConn(client: Client, addr: string) {
+  const machine = new RemoteDriver(localClient, addr);
+  machine.start();
+  machine.once('should_accept_handshake', () => {
+    machine.emit('handshake_accept', true);
+  });
+  await machine.initClient(client, true);
+  driverManager.register(machine);
+}

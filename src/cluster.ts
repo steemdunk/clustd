@@ -64,31 +64,28 @@ export class Cluster extends EventEmitter {
   }
 
   setupMachineListeners(machine: ClusterMachine) {
+    machine.on('should_accept_handshake', () => {
+      const m = this.machines[machine.id!];
+      const accept = !m || (m && !m.open);
+      machine.emit('handshake_accept', accept);
+      if (!accept) machine.stop();
+    });
+
     machine.once('open', () => {
       if (!this.register(machine)) {
         machine.stop();
       }
     });
 
-    machine.on('open', async () => {
-      try {
-        const newMasterId: string = (await machine.send('get_master')).master;
-        if (newMasterId === machine.id) {
-          this.assignMaster(newMasterId);
-        }
-      } catch (e) {
-        this.logger.error('Failed to check if machine is master:', machine.id, e);
-      }
-    });
-
     machine.on('close', () => {
-      if (this.master!.id === machine.id) {
+      if (this.master && this.master!.id === machine.id) {
         this.assignMaster();
       }
     });
 
     machine.on('cluster_master_get', () => {
-      machine.emit('cluster_master_current', this.master!.id);
+      const id = this.master ? this.master.id : undefined;
+      machine.emit('cluster_master_current', id);
     });
   }
 
@@ -115,5 +112,26 @@ export class Cluster extends EventEmitter {
 
     const isMaster = this.master.id === this.local.id;
     this.emit('assign_master', this.master.id, isMaster);
+  }
+
+  async getRemoteMaster(): Promise<ClusterMachine|undefined> {
+    if (!Object.keys(this.machines).length) {
+      return;
+    }
+
+    let master: ClusterMachine|undefined;
+    for (const m of Object.values(this.machines)) {
+      const newMasterId: string = (await m.send('get_master')).master;
+      const newMaster = this.machines[newMasterId];
+      if (!newMaster) {
+        this.logger.warn('Unrecognized machine id:', newMasterId);
+        continue;
+      }
+      if (!(master === undefined || newMaster.id === master.id)) {
+        throw new Error('fatal master mismatch on the network');
+      }
+      master = newMaster;
+    }
+    return master;
   }
 }
