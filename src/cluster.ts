@@ -35,13 +35,14 @@ export class Cluster extends EventEmitter {
       if (old.local) {
         return false;
       }
+
       if (old.open) {
-        machine.stop();
-        this.logger.info(`Keeping previous machine '${machine.id}' connection alive`);
+        this.logger.info(`Keeping previous machine\
+'${machine.id} (${machine.globalId})' connection alive`);
         return false;
       } else {
-        this.logger.info(`Disconnected machine '${machine.id}' has reconnected`);
-        old.stop();
+        this.logger.info(`Disconnected machine\
+'${machine.id} (${machine.globalId})' has reconnected`);
       }
     }
     this.machines[machine.id!] = machine;
